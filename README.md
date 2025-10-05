@@ -1,21 +1,47 @@
-# TON Wallet Generator
+# TON Wallet Manager
 
-A simple **offline** Go tool to generate TON wallets from seed phrases using different wallet versions and subwallet IDs.
+A comprehensive **offline** Go tool for managing TON wallets. Generate wallets from seed phrases, manage multiple wallet versions, and handle subwallet IDs with a clean, professional interface.
 
 ## Features
 
 - **Completely offline** - No network connection required
-- Generate new 24-word seed phrases or use existing ones
-- Support for multiple wallet versions (V3R1, V3R2, V4R1, V4R2, V5R1 Final)
-- Network selection (Mainnet/Testnet) for proper address generation
-- Custom subwallet ID support for creating multiple wallets from one seed
-- Displays wallet address, public key, and private key
-- Secure key derivation using TON's standard method
+- **Interactive & CLI modes** - User-friendly interface with scripting support
+- **Multiple wallet versions** - Support for V3R1, V3R2, V4R1, V4R2, V5R1 Final
+- **Network selection** - Mainnet/Testnet for proper address generation
+- **Subwallet management** - Create multiple wallets from one seed
+- **Flexible input** - Accept seed phrases in any format (spaces, commas, lines)
+- **Clean output** - Parseable CLI output for automation
+- **Secure derivation** - TON standard PBKDF2 + HMAC-SHA512
+- **Professional structure** - Clean, maintainable Go architecture
 
 ## Installation
 
+### Quick Install
+
 ```bash
-go build -o ton-wallet-generator
+# Build the application
+go build -o bin/ton-wallet-manager ./cmd/ton-wallet-manager
+
+# Or install to $GOPATH/bin
+go install ./cmd/ton-wallet-manager
+```
+
+### Manual Build
+
+```bash
+go build -o bin/ton-wallet-manager ./cmd/ton-wallet-manager
+```
+
+The binary will be created in the `bin/` directory.
+
+## Quick Start
+
+```bash
+# Interactive mode (recommended for first-time users)
+./bin/ton-wallet-manager
+
+# CLI mode (for automation and scripting)
+./bin/ton-wallet-manager --generate --simple
 ```
 
 ## Usage
@@ -25,7 +51,8 @@ go build -o ton-wallet-generator
 Run the program without any flags for interactive mode:
 
 ```bash
-./ton-wallet-generator
+./bin/ton-wallet-manager
+# Or if installed: ton-wallet-manager
 ```
 
 The program will interactively ask you:
@@ -46,24 +73,24 @@ Use CLI flags for non-interactive wallet generation. Clean output suitable for p
 
 ```bash
 # Generate a new wallet and show only the address (cleanest output)
-./ton-wallet-generator --generate --simple
+./bin/ton-wallet-manager --generate --simple
 
 # Generate a new wallet with parseable output
-./ton-wallet-generator --generate
+./bin/ton-wallet-manager --generate
 
 # Generate a wallet on testnet with V5R1
-./ton-wallet-generator --generate --network testnet --version v5r1
+./bin/ton-wallet-manager --generate --network testnet --version v5r1
 
 # Use an existing seed phrase
-./ton-wallet-generator --seed "word1 word2 word3 ... word24" --simple
+./bin/ton-wallet-manager --seed "word1 word2 word3 ... word24" --simple
 
 # Create a wallet with custom subwallet ID
-./ton-wallet-generator --generate --subwallet 0
+./bin/ton-wallet-manager --generate --subwallet 0
 
 # Pipe examples - extract specific fields
-./ton-wallet-generator --generate | grep "^Address:"
-./ton-wallet-generator --generate | awk -F': ' '/^Address:/ {print $2}'
-./ton-wallet-generator --generate --simple | xargs -I {} echo "New wallet: {}"
+./bin/ton-wallet-manager --generate | grep "^Address:"
+./bin/ton-wallet-manager --generate | awk -F': ' '/^Address:/ {print $2}'
+./bin/ton-wallet-manager --generate --simple | xargs -I {} echo "New wallet: {}"
 ```
 
 #### Available CLI Flags
@@ -94,7 +121,7 @@ When using `--generate --simple` (or any CLI flags without specifying options), 
 
 ```bash
 # This creates a Mainnet V4R2 wallet with subwallet 698983191
-./ton-wallet-generator --generate --simple
+./bin/ton-wallet-manager --generate --simple
 ```
 
 #### CLI Output Format
@@ -130,17 +157,17 @@ PrivateKey: dcbe502c265c460dd3d1c7b6fafa694741f930108624a12b2e8dc72bbf3dc9ab4dab
 
 ```bash
 # Generate a wallet and save address to variable (seed visible in terminal)
-ADDRESS=$(./ton-wallet-generator --generate --simple 2>&1 | tail -1)
+ADDRESS=$(./bin/ton-wallet-manager --generate --simple 2>&1 | tail -1)
 
 # Get address from existing seed for scripting
-./ton-wallet-generator --seed "your 24 words here" --simple
+./bin/ton-wallet-manager --seed "your 24 words here" --simple
 
 # Generate wallet and filter output for parsing
-./ton-wallet-generator --generate | grep "^Address:" | cut -d' ' -f2
+./bin/ton-wallet-manager --generate | grep "^Address:" | cut -d' ' -f2
 
 # Create multiple wallets with different subwallet IDs from same seed
 for i in 0 1 2; do
-  ./ton-wallet-generator --seed "your seed" --subwallet $i --simple
+  ./bin/ton-wallet-manager --seed "your seed" --subwallet $i --simple
 done
 ```
 
@@ -155,7 +182,7 @@ To create multiple wallets from the same seed phrase, run the program multiple t
 ### Example
 
 ```
-TON Wallet Generator
+TON Wallet Manager
 ===================
 
 Generate new seed phrase? (y/n): y
@@ -193,7 +220,7 @@ Private Key: def456...
 ========================================
 
 Note: Store your seed phrase securely!
-This is an offline wallet generator - no network connection required!
+This is an offline wallet manager - no network connection required!
 ```
 
 ## Security Notes
@@ -202,6 +229,23 @@ This is an offline wallet generator - no network connection required!
 - **Store your seed phrase securely** - Write it down and keep it in a safe place
 - **Private keys are sensitive** - The program displays private keys for convenience, but never share them
 - Different subwallet IDs create completely different wallet addresses from the same seed
+
+## Project Structure
+
+This project is organized into clean, maintainable packages:
+
+```
+ton-wallet-manager/
+├── cmd/ton-wallet-manager/    # Application entry point
+├── internal/
+│   ├── wallet/                # Core wallet management logic
+│   ├── cli/                   # Command-line interface
+│   └── ui/                    # User interface (interactive & display)
+├── bin/                       # Build output
+└── STRUCTURE.md               # Detailed architecture documentation
+```
+
+For detailed information about the architecture and design decisions, see [STRUCTURE.md](STRUCTURE.md).
 
 ## Technical Details
 
@@ -212,6 +256,11 @@ This is an offline wallet generator - no network connection required!
 - Network-aware address generation (Mainnet/Testnet)
 - Default subwallet ID: 698983191
 - Secure key derivation using TON's official method
+- Clean architecture with separation of concerns
+- Factory functions over classes (functional approach)
+- Professional Go project structure
+- Easy to extend and maintain
+- Simple build process with standard Go tools
 
 ## ⚠️ Disclaimer
 

@@ -22,29 +22,29 @@ jobs:
 
             - name: Build for Linux
               run: |
-                  GOOS=linux GOARCH=amd64 go build -o ton-wallet-generator-linux-amd64 .
-                  GOOS=linux GOARCH=arm64 go build -o ton-wallet-generator-linux-arm64 .
+                  GOOS=linux GOARCH=amd64 go build -o ton-wallet-manager-linux-amd64 ./cmd/ton-wallet-manager
+                  GOOS=linux GOARCH=arm64 go build -o ton-wallet-manager-linux-arm64 ./cmd/ton-wallet-manager
 
             - name: Build for macOS
               run: |
-                  GOOS=darwin GOARCH=amd64 go build -o ton-wallet-generator-darwin-amd64 .
-                  GOOS=darwin GOARCH=arm64 go build -o ton-wallet-generator-darwin-arm64 .
+                  GOOS=darwin GOARCH=amd64 go build -o ton-wallet-manager-darwin-amd64 ./cmd/ton-wallet-manager
+                  GOOS=darwin GOARCH=arm64 go build -o ton-wallet-manager-darwin-arm64 ./cmd/ton-wallet-manager
 
             - name: Build for Windows
               run: |
-                  GOOS=windows GOARCH=amd64 go build -o ton-wallet-generator-windows-amd64.exe .
-                  GOOS=windows GOARCH=arm64 go build -o ton-wallet-generator-windows-arm64.exe .
+                  GOOS=windows GOARCH=amd64 go build -o ton-wallet-manager-windows-amd64.exe ./cmd/ton-wallet-manager
+                  GOOS=windows GOARCH=arm64 go build -o ton-wallet-manager-windows-arm64.exe ./cmd/ton-wallet-manager
 
             - name: Create Release
               uses: softprops/action-gh-release@v1
               with:
                   files: |
-                      ton-wallet-generator-linux-amd64
-                      ton-wallet-generator-linux-arm64
-                      ton-wallet-generator-darwin-amd64
-                      ton-wallet-generator-darwin-arm64
-                      ton-wallet-generator-windows-amd64.exe
-                      ton-wallet-generator-windows-arm64.exe
+                      ton-wallet-manager-linux-amd64
+                      ton-wallet-manager-linux-arm64
+                      ton-wallet-manager-darwin-amd64
+                      ton-wallet-manager-darwin-arm64
+                      ton-wallet-manager-windows-amd64.exe
+                      ton-wallet-manager-windows-arm64.exe
                   generate_release_notes: true
               env:
                   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

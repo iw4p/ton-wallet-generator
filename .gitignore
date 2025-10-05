@@ -1,43 +1,30 @@
-# Binaries for programs and plugins
+# Binaries
+bin/
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
+
+# Test binary, built with `go test -c`
 *.test
+
+# Output of the go coverage tool
 *.out
 
-# Output of the go coverage tool, specifically when used with LiteIDE
-*.coverprofile
-
-# Project-local glide cache, RE: https://github.com/Masterminds/glide/issues/736
-.glide/
-
-# Dependency directories (remove the comment below if you use Go modules)
+# Dependency directories
 vendor/
 
 # Go workspace file
 go.work
-go.work.sum
 
-# Go module files (sometimes you want to ignore local replace directives)
-# Uncomment if needed
-# go.mod
-# go.sum
-
-# IDE/editor files
+# IDE
 .idea/
 .vscode/
 *.swp
+*.swo
+*~
 
-# OS generated files
+# OS files
 .DS_Store
 Thumbs.db
-
-# Test binary output
-*.test
-
-# Build output
-bin/
-build/
-dist/

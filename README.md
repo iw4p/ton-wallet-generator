@@ -1,6 +1,6 @@
-# TON Wallet Manager
+# TON Wallet Generator
 
-A simple **offline** Go tool to create multiple TON wallets from a single seed phrase using different wallet versions and subwallet IDs.
+A simple **offline** Go tool to generate TON wallets from seed phrases using different wallet versions and subwallet IDs.
 
 ## Features
 
@@ -15,7 +15,7 @@ A simple **offline** Go tool to create multiple TON wallets from a single seed p
 ## Installation
 
 ```bash
-go build -o ton-wallet-manager
+go build -o ton-wallet-generator
 ```
 
 ## Usage
@@ -25,7 +25,7 @@ go build -o ton-wallet-manager
 Run the program without any flags for interactive mode:
 
 ```bash
-./ton-wallet-manager
+./ton-wallet-generator
 ```
 
 The program will interactively ask you:
@@ -46,24 +46,24 @@ Use CLI flags for non-interactive wallet generation. Clean output suitable for p
 
 ```bash
 # Generate a new wallet and show only the address (cleanest output)
-./ton-wallet-manager --generate --simple
+./ton-wallet-generator --generate --simple
 
 # Generate a new wallet with parseable output
-./ton-wallet-manager --generate
+./ton-wallet-generator --generate
 
 # Generate a wallet on testnet with V5R1
-./ton-wallet-manager --generate --network testnet --version v5r1
+./ton-wallet-generator --generate --network testnet --version v5r1
 
 # Use an existing seed phrase
-./ton-wallet-manager --seed "word1 word2 word3 ... word24" --simple
+./ton-wallet-generator --seed "word1 word2 word3 ... word24" --simple
 
 # Create a wallet with custom subwallet ID
-./ton-wallet-manager --generate --subwallet 0
+./ton-wallet-generator --generate --subwallet 0
 
 # Pipe examples - extract specific fields
-./ton-wallet-manager --generate | grep "^Address:"
-./ton-wallet-manager --generate | awk -F': ' '/^Address:/ {print $2}'
-./ton-wallet-manager --generate --simple | xargs -I {} echo "New wallet: {}"
+./ton-wallet-generator --generate | grep "^Address:"
+./ton-wallet-generator --generate | awk -F': ' '/^Address:/ {print $2}'
+./ton-wallet-generator --generate --simple | xargs -I {} echo "New wallet: {}"
 ```
 
 #### Available CLI Flags
@@ -81,6 +81,21 @@ Use CLI flags for non-interactive wallet generation. Clean output suitable for p
 
 - With `--generate`: Seed phrase goes to **stderr** (visible but not piped), address goes to **stdout** (pipeable)
 - With `--seed`: Only address goes to **stdout** (useful when you already have the seed and just need the address)
+
+**Default Settings:**
+When using `--generate --simple` (or any CLI flags without specifying options), the tool uses these defaults:
+
+- **Network**: Mainnet
+- **Version**: V4R2 (recommended)
+- **Subwallet ID**: 698983191 (standard for V4R2)
+- **Output**: Address only to stdout, seed phrase to stderr
+
+**Example:**
+
+```bash
+# This creates a Mainnet V4R2 wallet with subwallet 698983191
+./ton-wallet-generator --generate --simple
+```
 
 #### CLI Output Format
 
@@ -115,17 +130,17 @@ PrivateKey: dcbe502c265c460dd3d1c7b6fafa694741f930108624a12b2e8dc72bbf3dc9ab4dab
 
 ```bash
 # Generate a wallet and save address to variable (seed visible in terminal)
-ADDRESS=$(./ton-wallet-manager --generate --simple 2>&1 | tail -1)
+ADDRESS=$(./ton-wallet-generator --generate --simple 2>&1 | tail -1)
 
 # Get address from existing seed for scripting
-./ton-wallet-manager --seed "your 24 words here" --simple
+./ton-wallet-generator --seed "your 24 words here" --simple
 
 # Generate wallet and filter output for parsing
-./ton-wallet-manager --generate | grep "^Address:" | cut -d' ' -f2
+./ton-wallet-generator --generate | grep "^Address:" | cut -d' ' -f2
 
 # Create multiple wallets with different subwallet IDs from same seed
 for i in 0 1 2; do
-  ./ton-wallet-manager --seed "your seed" --subwallet $i --simple
+  ./ton-wallet-generator --seed "your seed" --subwallet $i --simple
 done
 ```
 
@@ -140,8 +155,8 @@ To create multiple wallets from the same seed phrase, run the program multiple t
 ### Example
 
 ```
-TON Wallet Manager
-==================
+TON Wallet Generator
+===================
 
 Generate new seed phrase? (y/n): y
 

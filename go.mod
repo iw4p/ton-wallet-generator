@@ -1,4 +1,4 @@
-module ton-wallet-manager
+module ton-wallet-generator
 
 go 1.21
 

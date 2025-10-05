@@ -220,8 +220,8 @@ func buildConfigFromFlags(flags CLIFlags) (WalletConfig, error) {
 
 func printHeader() {
 	fmt.Println("\n╔════════════════════════════════════╗")
-	fmt.Println("║     TON Wallet Manager v1.0        ║")
-	fmt.Println("║     Offline Wallet Generator       ║")
+	fmt.Println("║     TON Wallet Generator v1.0     ║")
+	fmt.Println("║     Offline Key Derivation Tool    ║")
 	fmt.Println("╚════════════════════════════════════╝")
 	fmt.Println()
 }

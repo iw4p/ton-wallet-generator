@@ -212,3 +212,26 @@ This is an offline wallet generator - no network connection required!
 - Network-aware address generation (Mainnet/Testnet)
 - Default subwallet ID: 698983191
 - Secure key derivation using TON's official method
+
+## ⚠️ Disclaimer
+
+**USE AT YOUR OWN RISK**
+
+This software is provided "as is" without warranty of any kind. The author is not responsible for:
+
+- **Loss of funds** due to incorrect usage, lost seed phrases, or private keys
+- **Security vulnerabilities** or bugs in the software
+- **Compatibility issues** with different TON wallet implementations
+- **Any financial losses** resulting from the use of this tool
+
+**Important Security Notes:**
+
+- Always verify addresses on multiple sources before sending funds
+- Store your seed phrases securely offline
+- Test with small amounts first
+- This tool is for educational and personal use only
+- The author assumes no responsibility for any losses or damages
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

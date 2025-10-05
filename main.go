@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"crypto/hmac"
 	"crypto/sha512"
+	"flag"
 	"fmt"
 	"os"
 	"strconv"
@@ -38,6 +39,16 @@ type WalletInfo struct {
 	Address *address.Address
 }
 
+// CLIFlags holds command-line arguments
+type CLIFlags struct {
+	Generate   bool
+	Seed       string
+	Network    string
+	Version    string
+	Subwallet  int
+	SimpleMode bool
+}
+
 func main() {
 	if err := run(); err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -46,10 +57,31 @@ func main() {
 }
 
 func run() error {
-	printHeader()
+	flags := parseCLIFlags()
 
-	scanner := bufio.NewScanner(os.Stdin)
-	config, err := collectWalletConfig(scanner)
+	// Check if running in CLI mode (any flag provided)
+	cliMode := flags.Generate || flags.Seed != "" || flags.Network != "" || flags.Version != "" || flags.Subwallet >= 0
+
+	if !cliMode {
+		// Interactive mode
+		printHeader()
+		scanner := bufio.NewScanner(os.Stdin)
+		config, err := collectWalletConfig(scanner)
+		if err != nil {
+			return err
+		}
+
+		walletInfo, err := generateWallet(config)
+		if err != nil {
+			return err
+		}
+
+		displayWalletInfo(walletInfo)
+		return nil
+	}
+
+	// CLI mode - clean output for piping
+	config, err := buildConfigFromFlags(flags)
 	if err != nil {
 		return err
 	}
@@ -59,8 +91,127 @@ func run() error {
 		return err
 	}
 
-	displayWalletInfo(walletInfo)
+	if flags.SimpleMode {
+		fmt.Println(walletInfo.Address.String())
+	} else {
+		displayWalletInfoCLI(walletInfo)
+	}
+
 	return nil
+}
+
+func parseCLIFlags() CLIFlags {
+	generate := flag.Bool("generate", false, "Generate a new seed phrase")
+	seed := flag.String("seed", "", "Seed phrase (24 words, space-separated)")
+	network := flag.String("network", "", "Network: mainnet or testnet (default: mainnet)")
+	version := flag.String("version", "", "Wallet version: v3r1, v3r2, v4r1, v4r2, v5r1beta, v5r1final (default: v4r2)")
+	subwallet := flag.Int("subwallet", -1, "Subwallet ID (default: 698983191 for v3/v4, 0 for v5)")
+	simple := flag.Bool("simple", false, "Simple output mode (only show address)")
+
+	flag.Parse()
+
+	return CLIFlags{
+		Generate:   *generate,
+		Seed:       *seed,
+		Network:    *network,
+		Version:    *version,
+		Subwallet:  *subwallet,
+		SimpleMode: *simple,
+	}
+}
+
+func buildConfigFromFlags(flags CLIFlags) (WalletConfig, error) {
+	var seed []string
+
+	// Handle seed
+	if flags.Generate {
+		seed = wallet.NewSeed()
+		// Always output generated seed (even in simple mode) to stderr with clear label
+		fmt.Fprintf(os.Stderr, "# Seed phrase (save securely!):\n")
+		fmt.Fprintf(os.Stderr, "%s\n", strings.Join(seed, " "))
+		if !flags.SimpleMode {
+			fmt.Fprintln(os.Stderr)
+		}
+	} else if flags.Seed != "" {
+		seed = strings.Fields(flags.Seed)
+		if len(seed) != 24 {
+			return WalletConfig{}, fmt.Errorf("seed phrase must contain exactly 24 words, got %d", len(seed))
+		}
+	} else {
+		return WalletConfig{}, fmt.Errorf("either --generate or --seed must be provided")
+	}
+
+	// Handle network
+	var networkID int32
+	networkID = wallet.MainnetGlobalID
+	networkName := "Mainnet"
+	if flags.Network != "" {
+		switch strings.ToLower(flags.Network) {
+		case "mainnet", "main":
+			networkID = wallet.MainnetGlobalID
+			networkName = "Mainnet"
+		case "testnet", "test":
+			networkID = wallet.TestnetGlobalID
+			networkName = "Testnet"
+		default:
+			return WalletConfig{}, fmt.Errorf("invalid network: %s (use mainnet or testnet)", flags.Network)
+		}
+	}
+
+	// Handle version
+	versionStr := "v4r2"
+	if flags.Version != "" {
+		versionStr = strings.ToLower(flags.Version)
+	}
+
+	var walletVersion wallet.VersionConfig
+	var versionName string
+	var isV5 bool
+
+	switch versionStr {
+	case "v3r1":
+		walletVersion = wallet.V3R1
+		versionName = "V3R1"
+	case "v3r2":
+		walletVersion = wallet.V3R2
+		versionName = "V3R2"
+	case "v4r1":
+		walletVersion = wallet.V4R1
+		versionName = "V4R1"
+	case "v4r2":
+		walletVersion = wallet.V4R2
+		versionName = "V4R2"
+	case "v5r1beta", "v5beta":
+		config := wallet.ConfigV5R1Beta{NetworkGlobalID: networkID}
+		walletVersion = config
+		versionName = "V5R1 Beta"
+		isV5 = true
+	case "v5r1final", "v5r1", "v5":
+		config := wallet.ConfigV5R1Final{NetworkGlobalID: networkID}
+		walletVersion = config
+		versionName = "V5R1 Final"
+		isV5 = true
+	default:
+		return WalletConfig{}, fmt.Errorf("invalid version: %s", flags.Version)
+	}
+
+	// Handle subwallet ID
+	subwalletID := uint32(wallet.DefaultSubwallet)
+	if isV5 {
+		subwalletID = 0
+	}
+	if flags.Subwallet >= 0 {
+		subwalletID = uint32(flags.Subwallet)
+	}
+
+	return WalletConfig{
+		Seed:            seed,
+		NetworkGlobalID: networkID,
+		NetworkName:     networkName,
+		Version:         walletVersion,
+		VersionName:     versionName,
+		SubwalletID:     subwalletID,
+	}, nil
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -96,6 +247,15 @@ func displayWalletInfo(info WalletInfo) {
 	fmt.Println("  • Never share your private key or seed phrase")
 	fmt.Println("  • This generator works completely offline")
 	fmt.Println()
+}
+
+func displayWalletInfoCLI(info WalletInfo) {
+	fmt.Printf("Address: %s\n", info.Address.String())
+	fmt.Printf("Network: %s\n", info.Config.NetworkName)
+	fmt.Printf("Version: %s\n", info.Config.VersionName)
+	fmt.Printf("Subwallet: %d\n", info.Config.SubwalletID)
+	fmt.Printf("PublicKey: %x\n", info.Keys.Public)
+	fmt.Printf("PrivateKey: %x\n", info.Keys.Private)
 }
 
 // ═══════════════════════════════════════════════════════════════════

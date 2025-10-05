@@ -20,7 +20,9 @@ go build -o ton-wallet-manager
 
 ## Usage
 
-Run the program:
+### Interactive Mode
+
+Run the program without any flags for interactive mode:
 
 ```bash
 ./ton-wallet-manager
@@ -37,6 +39,95 @@ The program will interactively ask you:
 2. **Network selection**: Choose Mainnet or Testnet
 3. **Wallet version**: Select from V3R1, V3R2, V4R1, V4R2, or V5R1 Final (V4R2 recommended)
 4. **Subwallet ID**: Enter a custom subwallet ID or press Enter for default (698983191)
+
+### CLI Mode (Non-Interactive)
+
+Use CLI flags for non-interactive wallet generation. Clean output suitable for piping and scripting:
+
+```bash
+# Generate a new wallet and show only the address (cleanest output)
+./ton-wallet-manager --generate --simple
+
+# Generate a new wallet with parseable output
+./ton-wallet-manager --generate
+
+# Generate a wallet on testnet with V5R1
+./ton-wallet-manager --generate --network testnet --version v5r1
+
+# Use an existing seed phrase
+./ton-wallet-manager --seed "word1 word2 word3 ... word24" --simple
+
+# Create a wallet with custom subwallet ID
+./ton-wallet-manager --generate --subwallet 0
+
+# Pipe examples - extract specific fields
+./ton-wallet-manager --generate | grep "^Address:"
+./ton-wallet-manager --generate | awk -F': ' '/^Address:/ {print $2}'
+./ton-wallet-manager --generate --simple | xargs -I {} echo "New wallet: {}"
+```
+
+#### Available CLI Flags
+
+- `--generate` - Generate a new seed phrase
+- `--seed <phrase>` - Use an existing 24-word seed phrase (space-separated)
+- `--network <name>` - Network: `mainnet` or `testnet` (default: mainnet)
+- `--version <ver>` - Wallet version: `v3r1`, `v3r2`, `v4r1`, `v4r2`, `v5r1beta`, `v5r1final` (default: v4r2)
+- `--subwallet <id>` - Custom subwallet ID (default: 698983191 for v3/v4, 0 for v5)
+- `--simple` - Simple output mode (only show the address on stdout)
+
+**Note:** Either `--generate` or `--seed` must be provided in CLI mode.
+
+**About `--simple` flag:**
+
+- With `--generate`: Seed phrase goes to **stderr** (visible but not piped), address goes to **stdout** (pipeable)
+- With `--seed`: Only address goes to **stdout** (useful when you already have the seed and just need the address)
+
+#### CLI Output Format
+
+**Simple mode with existing seed** (`--seed "..." --simple`):
+
+```
+EQAwSf6OBbhbNNTaJWTbH_rxIPpi-JYuZz67qnJVXDEuDfn5
+```
+
+**Simple mode with generation** (`--generate --simple`):
+
+```
+# Seed phrase (save securely!):           ← stderr (visible in terminal)
+word1 word2 ... word24                    ← stderr (visible in terminal)
+EQAwSf6OBbhbNNTaJWTbH_rxIPpi-JYuZz67qnJVXDEuDfn5  ← stdout (pipeable)
+```
+
+**Regular CLI mode** (clean, parseable):
+
+```
+Address: EQAwSf6OBbhbNNTaJWTbH_rxIPpi-JYuZz67qnJVXDEuDfn5
+Network: Mainnet
+Version: V4R2
+Subwallet: 698983191
+PublicKey: 4dab400f4b6e682ee706472973b1bf49c3ef09c9c4fc79ae86745f105c8d418a
+PrivateKey: dcbe502c265c460dd3d1c7b6fafa694741f930108624a12b2e8dc72bbf3dc9ab4dab400f4b6e682ee706472973b1bf49c3ef09c9c4fc79ae86745f105c8d418a
+```
+
+**Important:** When generating with `--generate`, the seed is **always** output (to stderr in `--simple` mode, to stdout otherwise). This ensures you never lose access to your wallet.
+
+#### Practical Examples
+
+```bash
+# Generate a wallet and save address to variable (seed visible in terminal)
+ADDRESS=$(./ton-wallet-manager --generate --simple 2>&1 | tail -1)
+
+# Get address from existing seed for scripting
+./ton-wallet-manager --seed "your 24 words here" --simple
+
+# Generate wallet and filter output for parsing
+./ton-wallet-manager --generate | grep "^Address:" | cut -d' ' -f2
+
+# Create multiple wallets with different subwallet IDs from same seed
+for i in 0 1 2; do
+  ./ton-wallet-manager --seed "your seed" --subwallet $i --simple
+done
+```
 
 ### Creating Multiple Wallets
 
